@@ -1,0 +1,268 @@
+from typing import List, Optional
+import math
+
+# =========================================================
+# NODE UNTUK SINGLY LINKED LIST
+# =========================================================
+class ListNode:
+    def __init__(self, data, next=None):
+        self.data = data
+        self.next = next
+
+
+# =========================================================
+# ADVANCED SORTER
+# =========================================================
+class AdvancedSorter:
+
+    # =====================================================
+    # 1. ARRAY MERGE SORT
+    # =====================================================
+    def sort_array(self, arr: List[int]) -> List[int]:
+
+        if len(arr) <= 1:
+            return arr
+
+        # hanya 1 tmp array
+        tmp_array = [0] * len(arr)
+
+        self._rec_merge_sort(arr, 0, len(arr) - 1, tmp_array)
+
+        return arr
+
+    def _rec_merge_sort(self, arr, first, last, tmp_array):
+
+        if first >= last:
+            return
+
+        mid = (first + last) // 2
+
+        # rekursi kiri
+        self._rec_merge_sort(arr, first, mid, tmp_array)
+
+        # rekursi kanan
+        self._rec_merge_sort(arr, mid + 1, last, tmp_array)
+
+        # merge
+        self._merge_virtual(arr, first, mid, last, tmp_array)
+
+    def _merge_virtual(self, arr, left_start, mid, right_end, tmp_array):
+
+        i = left_start
+        j = mid + 1
+        k = left_start
+
+        # merge stable
+        while i <= mid and j <= right_end:
+
+            if arr[i] <= arr[j]:
+                tmp_array[k] = arr[i]
+                i += 1
+            else:
+                tmp_array[k] = arr[j]
+                j += 1
+
+            k += 1
+
+        # sisa kiri
+        while i <= mid:
+            tmp_array[k] = arr[i]
+            i += 1
+            k += 1
+
+        # sisa kanan
+        while j <= right_end:
+            tmp_array[k] = arr[j]
+            j += 1
+            k += 1
+
+        # copy kembali ke array asli
+        for idx in range(left_start, right_end + 1):
+            arr[idx] = tmp_array[idx]
+
+    # =====================================================
+    # 2. LINKED LIST MERGE SORT
+    # =====================================================
+    def sort_linked_list(self, head: Optional[ListNode]):
+
+        if head is None or head.next is None:
+            return head
+
+        # split linked list
+        right_head = self._split_linked_list(head)
+
+        left_sorted = self.sort_linked_list(head)
+        right_sorted = self.sort_linked_list(right_head)
+
+        return self._merge_linked_lists(left_sorted, right_sorted)
+
+    def _split_linked_list(self, head):
+
+        midPoint = head
+        curNode = head.next
+
+        while curNode and curNode.next:
+
+            midPoint = midPoint.next
+            curNode = curNode.next.next
+
+        right_head = midPoint.next
+
+        # putus linked list
+        midPoint.next = None
+
+        return right_head
+
+    def _merge_linked_lists(self, listA, listB):
+
+        dummy = ListNode(0)
+        tail = dummy
+
+        while listA and listB:
+
+            # stable merge
+            if listA.data <= listB.data:
+
+                tail.next = listA
+                listA = listA.next
+
+            else:
+
+                tail.next = listB
+                listB = listB.next
+
+            tail = tail.next
+
+        # sambungkan sisa node
+        if listA:
+            tail.next = listA
+        else:
+            tail.next = listB
+
+        return dummy.next
+
+    # =====================================================
+    # 3. QUICK SORT PARTITION
+    # =====================================================
+    def partition_quick(self, arr, first, last):
+
+        mid = (first + last) // 2
+
+        # median-of-three
+        if arr[first] > arr[mid]:
+            arr[first], arr[mid] = arr[mid], arr[first]
+
+        if arr[first] > arr[last]:
+            arr[first], arr[last] = arr[last], arr[first]
+
+        if arr[mid] > arr[last]:
+            arr[mid], arr[last] = arr[last], arr[mid]
+
+        # median pindah ke depan
+        arr[first], arr[mid] = arr[mid], arr[first]
+
+        pivot = arr[first]
+
+        left = first + 1
+        right = last
+
+        done = False
+
+        while not done:
+
+            while left <= right and arr[left] <= pivot:
+                left += 1
+
+            while right >= left and arr[right] >= pivot:
+                right -= 1
+
+            if right < left:
+                done = True
+            else:
+                arr[left], arr[right] = arr[right], arr[left]
+
+        # tukar pivot
+        arr[first], arr[right] = arr[right], arr[first]
+
+        return right
+
+
+# =========================================================
+# FUNGSI BANTU LINKED LIST
+# =========================================================
+def print_linked_list(head):
+
+    current = head
+
+    while current:
+        print(current.data, end=" -> ")
+        current = current.next
+
+    print("None")
+
+
+# =========================================================
+# TESTING DI TERMINAL
+# =========================================================
+if __name__ == "__main__":
+
+    sorter = AdvancedSorter()
+
+    # =====================================================
+    # TEST ARRAY MERGE SORT
+    # =====================================================
+    print("========== ARRAY MERGE SORT ==========")
+
+    arr = [45, 12, 78, 3, 56, 23, 89, 1]
+
+    print("Array sebelum sorting:")
+    print(arr)
+
+    sorted_arr = sorter.sort_array(arr)
+
+    print("\nArray setelah sorting:")
+    print(sorted_arr)
+
+    # =====================================================
+    # TEST LINKED LIST MERGE SORT
+    # =====================================================
+    print("\n========== LINKED LIST MERGE SORT ==========")
+
+    head = ListNode(50)
+    head.next = ListNode(20)
+    head.next.next = ListNode(70)
+    head.next.next.next = ListNode(10)
+    head.next.next.next.next = ListNode(40)
+
+    print("Linked list sebelum sorting:")
+    print_linked_list(head)
+
+    sorted_head = sorter.sort_linked_list(head)
+
+    print("\nLinked list setelah sorting:")
+    print_linked_list(sorted_head)
+
+    # =====================================================
+    # TEST QUICK SORT PARTITION
+    # =====================================================
+    print("\n========== QUICK SORT PARTITION ==========")
+
+    quick_arr = [90, 70, 50, 30, 10, 20, 40, 60, 80]
+
+    print("Array sebelum partition:")
+    print(quick_arr)
+
+    pivot_index = sorter.partition_quick(
+        quick_arr,
+        0,
+        len(quick_arr) - 1
+    )
+
+    print("\nArray setelah partition:")
+    print(quick_arr)
+
+    print("\nPosisi pivot akhir:")
+    print(pivot_index)
+
+    print("\nNilai pivot:")
+    print(quick_arr[pivot_index])
